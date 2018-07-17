@@ -133,6 +133,8 @@ main = do
             , "integer-simple"
             , "-package"
             , "base"
+            , "-package"
+            , "array"
             ]
         , compiler = c
         }

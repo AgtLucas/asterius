@@ -9,7 +9,6 @@ module Asterius.Builtins
   , getDefaultBuiltinsOptions
   , rtsAsteriusModuleSymbol
   , rtsAsteriusModule
-  , rtsAsteriusFunctionTypeMap
   , rtsAsteriusFunctionImports
   , rtsAsteriusFunctionExports
   , marshalErrorCode
@@ -33,7 +32,6 @@ import Asterius.BuildInfo
 import Asterius.Internals
 import Asterius.Types
 import qualified Data.ByteString.Short as SBS
-import qualified Data.HashMap.Strict as HM
 import Data.List
 import Data.Maybe
 import qualified Data.Vector as V
@@ -147,34 +145,15 @@ generateWasmFunctionTypeName FunctionType {..} =
   mconcat (intersperse "," [showSBS t | t <- V.toList paramTypes]) <>
   ")"
 
-rtsAsteriusFunctionTypeMap :: HM.HashMap SBS.ShortByteString FunctionType
-rtsAsteriusFunctionTypeMap =
-  HM.fromList
-    [ (generateWasmFunctionTypeName ft, ft)
-    | (rt, pts) <-
-        [ (F32, [F32])
-        , (F64, [F64])
-        , (F32, [F32, F32])
-        , (F64, [F64, F64])
-        , (None, [I32, I32])
-        , (None, [F32])
-        , (None, [F64])
-        , (None, [I32])
-        , (None, [I32, I32, I32, I32])
-        ]
-    , let ft = FunctionType {returnType = rt, paramTypes = pts}
-    ]
-
-rtsAsteriusFunctionImports :: V.Vector FunctionImport
+rtsAsteriusFunctionImports :: [AsteriusFunctionImport]
 rtsAsteriusFunctionImports =
-  V.fromList $
-  [ FunctionImport
-    { internalName = "__asterius_" <> op <> "_" <> ft
+  [ AsteriusFunctionImport
+    { internalName = "__asterius_" <> op <> "_" <> showSBS ft
     , externalModuleName = "Math"
     , externalBaseName = op
-    , functionTypeName = ft <> "(" <> ft <> ")"
+    , functionType = FunctionType {returnType = ft, paramTypes = [ft]}
     }
-  | ft <- ["F32", "F64"]
+  | ft <- [F32, F64]
   , op <-
       [ "sin"
       , "cos"
@@ -189,74 +168,77 @@ rtsAsteriusFunctionImports =
       , "exp"
       ]
   ] <>
-  [ FunctionImport
-    { internalName = "__asterius_" <> op <> "_" <> ft
+  [ AsteriusFunctionImport
+    { internalName = "__asterius_" <> op <> "_" <> showSBS ft
     , externalModuleName = "Math"
     , externalBaseName = op
-    , functionTypeName = ft <> "(" <> ft <> "," <> ft <> ")"
+    , functionType = FunctionType {returnType = ft, paramTypes = [ft, ft]}
     }
-  | ft <- ["F32", "F64"]
+  | ft <- [F32, F64]
   , op <- ["pow"]
   ] <>
-  [ FunctionImport
+  [ AsteriusFunctionImport
       { internalName = "printI64"
       , externalModuleName = "rts"
       , externalBaseName = "printI64"
-      , functionTypeName = "None(I32,I32)"
+      , functionType = FunctionType {returnType = None, paramTypes = [I32, I32]}
       }
-  , FunctionImport
+  , AsteriusFunctionImport
       { internalName = "printF32"
       , externalModuleName = "rts"
       , externalBaseName = "print"
-      , functionTypeName = "None(F32)"
+      , functionType = FunctionType {returnType = None, paramTypes = [F32]}
       }
-  , FunctionImport
+  , AsteriusFunctionImport
       { internalName = "printF64"
       , externalModuleName = "rts"
       , externalBaseName = "print"
-      , functionTypeName = "None(F64)"
+      , functionType = FunctionType {returnType = None, paramTypes = [F64]}
       }
-  , FunctionImport
+  , AsteriusFunctionImport
       { internalName = "errorI32"
       , externalModuleName = "rts"
       , externalBaseName = "panic"
-      , functionTypeName = "None(I32)"
+      , functionType = FunctionType {returnType = None, paramTypes = [I32]}
       }
-  , FunctionImport
+  , AsteriusFunctionImport
       { internalName = "traceCmm"
       , externalModuleName = "rts"
       , externalBaseName = "traceCmm"
-      , functionTypeName = "None(I32)"
+      , functionType = FunctionType {returnType = None, paramTypes = [I32]}
       }
-  , FunctionImport
+  , AsteriusFunctionImport
       { internalName = "traceCmmBlock"
       , externalModuleName = "rts"
       , externalBaseName = "traceCmmBlock"
-      , functionTypeName = "None(I32,I32)"
+      , functionType = FunctionType {returnType = None, paramTypes = [I32, I32]}
       }
-  , FunctionImport
+  , AsteriusFunctionImport
       { internalName = "traceCmmSetLocal"
       , externalModuleName = "rts"
       , externalBaseName = "traceCmmSetLocal"
-      , functionTypeName = "None(I32,I32,I32,I32)"
+      , functionType =
+          FunctionType {returnType = None, paramTypes = [I32, I32, I32, I32]}
       }
-  , FunctionImport
+  , AsteriusFunctionImport
       { internalName = "__asterius_memory_trap_trigger"
       , externalModuleName = "rts"
       , externalBaseName = "__asterius_memory_trap_trigger"
-      , functionTypeName = "None(I32,I32)"
+      , functionType = FunctionType {returnType = None, paramTypes = [I32, I32]}
       }
-  , FunctionImport
+  , AsteriusFunctionImport
       { internalName = "__asterius_load_i64"
       , externalModuleName = "rts"
       , externalBaseName = "__asterius_load_i64"
-      , functionTypeName = "None(I32,I32,I32,I32)"
+      , functionType =
+          FunctionType {returnType = None, paramTypes = [I32, I32, I32, I32]}
       }
-  , FunctionImport
+  , AsteriusFunctionImport
       { internalName = "__asterius_store_i64"
       , externalModuleName = "rts"
       , externalBaseName = "__asterius_store_i64"
-      , functionTypeName = "None(I32,I32,I32,I32)"
+      , functionType =
+          FunctionType {returnType = None, paramTypes = [I32, I32, I32, I32]}
       }
   ]
 

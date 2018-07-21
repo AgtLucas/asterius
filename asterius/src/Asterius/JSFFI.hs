@@ -457,20 +457,17 @@ generateFFIFunctionTypeMap FFIMarshalState {..} =
           wrapper_func_type = recoverWasmWrapperFunctionType ffiFunctionType
     ]
 
-generateFFIFunctionImports :: FFIMarshalState -> V.Vector FunctionImport
+generateFFIFunctionImports :: FFIMarshalState -> [AsteriusFunctionImport]
 generateFFIFunctionImports FFIMarshalState {..} =
-  V.fromList
-    [ FunctionImport
-      { internalName = fn
-      , externalModuleName = "jsffi"
-      , externalBaseName = fn
-      , functionTypeName =
-          generateWasmFunctionTypeName $
-          recoverWasmImportFunctionType ffiFunctionType
-      }
-    | (k, FFIDecl {..}) <- IM.toList ffiDecls
-    , let fn = fromString $ recoverWasmImportFunctionName k
-    ]
+  [ AsteriusFunctionImport
+    { internalName = fn
+    , externalModuleName = "jsffi"
+    , externalBaseName = fn
+    , functionType = recoverWasmImportFunctionType ffiFunctionType
+    }
+  | (k, FFIDecl {..}) <- IM.toList ffiDecls
+  , let fn = fromString $ recoverWasmImportFunctionName k
+  ]
 
 generateFFILambda :: FFIDecl -> Builder
 generateFFILambda FFIDecl {ffiFunctionType = FFIFunctionType {..}, ..} =

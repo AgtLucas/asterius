@@ -15,6 +15,7 @@ module Asterius.Types
   , AsteriusStatic(..)
   , AsteriusStatics(..)
   , AsteriusFunction(..)
+  , AsteriusFunctionImport(..)
   , AsteriusModule(..)
   , AsteriusModuleSymbol(..)
   , AsteriusEntitySymbol(..)
@@ -99,6 +100,13 @@ data AsteriusFunction = AsteriusFunction
   } deriving (Show, Generic, Data)
 
 instance Serialize AsteriusFunction
+
+data AsteriusFunctionImport = AsteriusFunctionImport
+  { internalName, externalModuleName, externalBaseName :: SBS.ShortByteString
+  , functionType :: FunctionType
+  } deriving (Show, Generic, Data)
+
+instance Serialize AsteriusFunctionImport
 
 data AsteriusModule = AsteriusModule
   { staticsMap :: HM.HashMap AsteriusEntitySymbol AsteriusStatics

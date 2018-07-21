@@ -401,6 +401,15 @@ resolveEntitySymbols sym_table = f
         go = gmapT f t
         subst = (sym_table !)
 
+resolveFunctionImport :: AsteriusFunctionImport -> FunctionImport
+resolveFunctionImport AsteriusFunctionImport {..} =
+  FunctionImport
+    { internalName = internalName
+    , externalModuleName = externalModuleName
+    , externalBaseName = externalBaseName
+    , functionTypeName = generateWasmFunctionTypeName functionType
+    }
+
 resolveAsteriusModule ::
      Bool
   -> FFIMarshalState
@@ -411,11 +420,14 @@ resolveAsteriusModule ::
 resolveAsteriusModule add_tracing ffi_state m_unresolved =
   ( Module
       { functionTypeMap =
-          rtsAsteriusFunctionTypeMap <>
           HM.fromList
-            [ (generateWasmFunctionTypeName functionType, functionType)
-            | AsteriusFunction {..} <-
-                HM.elems $ functionMap m_globals_syms_resolved
+            [ (generateWasmFunctionTypeName ft, ft)
+            | ft <-
+                [functionType | AsteriusFunctionImport {..} <- func_imports] <>
+                [ functionType
+                | AsteriusFunction {..} <-
+                    HM.elems $ functionMap m_globals_syms_resolved
+                ]
             ]
       , functionMap' =
           HM.fromList
@@ -437,7 +449,7 @@ resolveAsteriusModule add_tracing ffi_state m_unresolved =
                       }
             ]
       , functionImports =
-          rtsAsteriusFunctionImports <> generateFFIFunctionImports ffi_state
+          V.fromList [resolveFunctionImport imp | imp <- func_imports]
       , tableImports = []
       , globalImports = []
       , functionExports = rtsAsteriusFunctionExports
@@ -461,6 +473,8 @@ resolveAsteriusModule add_tracing ffi_state m_unresolved =
     resolve_syms :: Data a => a -> a
     resolve_syms = resolveEntitySymbols $ func_sym_map <> ss_sym_map
     m_globals_syms_resolved = resolve_syms m_globals_resolved
+    func_imports =
+      rtsAsteriusFunctionImports <> generateFFIFunctionImports ffi_state
 
 linkStart ::
      Bool

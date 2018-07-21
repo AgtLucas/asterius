@@ -8,7 +8,6 @@ module Asterius.Tracing
   ) where
 
 import Asterius.Builtins
-import Asterius.MemoryTrap
 import Asterius.Types
 import Data.Data (Data, gmapT)
 import qualified Data.HashMap.Strict as HM
@@ -20,9 +19,10 @@ import Type.Reflection
 addTracingModule ::
      HM.HashMap AsteriusEntitySymbol Int64
   -> AsteriusEntitySymbol
+  -> FunctionType
   -> Function
   -> Function
-addTracingModule func_sym_map func_sym func
+addTracingModule func_sym_map func_sym func_type func
   | func_sym `V.elem`
       [ "_get_Sp"
       , "_get_SpLim"
@@ -30,7 +30,7 @@ addTracingModule func_sym_map func_sym func
       , "_get_HpLim"
       , "__asterius_memory_trap"
       ] = func
-  | otherwise = addMemoryTrap $ f func
+  | otherwise = f func --addMemoryTrap $ f func
   where
     f :: Data a => a -> a
     f x =
@@ -141,8 +141,7 @@ addTracingModule func_sym_map func_sym func
                           ]
                       , valueType = None
                       }
-                  where Function {functionTypeName = ft} = func
-                        params = paramTypes (rtsAsteriusFunctionTypeMap HM.! ft)
+                  where params = paramTypes func_type
                         param_num = V.length params
                         index_int = fromIntegral index
                 _ -> go

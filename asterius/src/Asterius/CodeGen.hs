@@ -1030,19 +1030,17 @@ marshalCmmBlock inner_nodes exit_node = do
         [e] -> e
         _ -> Block {name = "", bodys = V.fromList es, valueType = None}
 
-marshalCmmProc :: GHC.CmmGraph -> CodeGen Function
+marshalCmmProc :: GHC.CmmGraph -> CodeGen AsteriusFunction
 marshalCmmProc GHC.CmmGraph {g_graph = GHC.GMany _ body _, ..} = do
   entry_k <- marshalLabel g_entry
-  rbs' <-
+  rbs <-
     for (GHC.bodyList body) $ \(lbl, GHC.BlockCC _ inner_nodes exit_node) -> do
       k <- marshalLabel lbl
       b <- marshalCmmBlock (GHC.blockToList inner_nodes) exit_node
       pure (k, b)
-  let (rbs, lrs) = resolveLocalRegs $ resolveGlobalRegs rbs'
   pure
-    Function
-      { functionTypeName = "I64()"
-      , varTypes = lrs
+    AsteriusFunction
+      { functionType = FunctionType {returnType = I64, paramTypes = []}
       , body =
           Block
             { name = ""

@@ -19,7 +19,7 @@ module Asterius.JSFFI
   , generateFFIDict
   ) where
 
-import Asterius.Internals hiding (IO)
+import Asterius.Builtins
 import Asterius.Types
 import Control.Applicative
 import Control.Monad.State.Strict
@@ -256,12 +256,6 @@ recoverWasmWrapperFunctionType FFIFunctionType {..} =
         V.fromList [recoverWasmWrapperValueType $ Just t | t <- ffiParamTypes]
     }
 
-generateWasmFunctionTypeName :: FunctionType -> SBS.ShortByteString
-generateWasmFunctionTypeName FunctionType {..} =
-  showSBS returnType <> "(" <>
-  mconcat (intersperse "," [showSBS t | t <- V.toList paramTypes]) <>
-  ")"
-
 recoverWasmImportFunctionName :: Int -> String
 recoverWasmImportFunctionName = ("__asterius_jsffi_" <>) . show
 
@@ -386,13 +380,15 @@ generateImplicitCastExpression signed src_t dest_t src_expr =
         error $
         "Unsupported implicit cast from " <> show src_t <> " to " <> show dest_t
 
-generateFFIWrapperFunction :: Int -> FFIDecl -> Function
+generateFFIWrapperFunction :: Int -> FFIDecl -> AsteriusFunction
 generateFFIWrapperFunction k FFIDecl {..} =
-  Function
-    { functionTypeName =
+  AsteriusFunction
+      {-functionTypeName =
         generateWasmFunctionTypeName $
         recoverWasmWrapperFunctionType ffiFunctionType
     , varTypes = []
+    ,-}
+    { functionType = undefined
     , body =
         generateImplicitCastExpression
           (case ffiResultType ffiFunctionType of

@@ -383,12 +383,7 @@ generateImplicitCastExpression signed src_t dest_t src_expr =
 generateFFIWrapperFunction :: Int -> FFIDecl -> AsteriusFunction
 generateFFIWrapperFunction k FFIDecl {..} =
   AsteriusFunction
-      {-functionTypeName =
-        generateWasmFunctionTypeName $
-        recoverWasmWrapperFunctionType ffiFunctionType
-    , varTypes = []
-    ,-}
-    { functionType = undefined
+    { functionType = recoverWasmWrapperFunctionType ffiFunctionType
     , body =
         generateImplicitCastExpression
           (case ffiResultType ffiFunctionType of

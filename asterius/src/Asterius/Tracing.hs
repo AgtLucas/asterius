@@ -8,6 +8,7 @@ module Asterius.Tracing
   ) where
 
 import Asterius.Builtins
+import Asterius.Internals
 import Asterius.Types
 import Data.Data (Data, gmapT)
 import qualified Data.HashMap.Strict as HM
@@ -30,7 +31,7 @@ addTracingModule func_sym_map func_sym func_type func
       , "_get_HpLim"
       , "__asterius_memory_trap"
       ] = func
-  | otherwise = f func --addMemoryTrap $ f func
+  | otherwise = f func
   where
     f :: Data a => a -> a
     f x =
@@ -148,4 +149,4 @@ addTracingModule func_sym_map func_sym func_type func
             _ -> go
       where
         go = gmapT f x
-        func_idx = ConstI32 $ fromIntegral $ func_sym_map HM.! func_sym
+        func_idx = ConstI32 $ fromIntegral $ func_sym_map ! func_sym

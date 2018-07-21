@@ -73,7 +73,7 @@ resolveLocalRegs func_param_n t =
         (sort $ toList $ collectUnresolvedLocalRegs t)
         ([fromIntegral func_param_n + 3 ..] :: [BinaryenIndex])
     lr_map = fromList lrs
-    lr_idx = (lr_map HM.!)
+    lr_idx = (lr_map !)
     f :: Data a => a -> a
     f x =
       case eqTypeRep (typeOf x) (typeRep :: TypeRep Expression) of
@@ -242,7 +242,7 @@ mergeSymbols force_link AsteriusStore {..} syms = (maybe_final_m, final_rep)
         (i_unfound_syms, i_sym_mods) =
           partitionEithers
             [ case HM.lookup i_staging_sym symbolMap of
-              Just mod_sym -> Right (i_staging_sym, moduleMap HM.! mod_sym)
+              Just mod_sym -> Right (i_staging_sym, moduleMap ! mod_sym)
               _ -> Left i_staging_sym
             | i_staging_sym <- toList i_staging_syms
             ]
@@ -352,7 +352,7 @@ makeMemory AsteriusModule {..} last_o sym_map =
                _ ->
                  error $
                  "Encountered unresolved content " <> show s <> " in makeMemory"))
-        (sym_map HM.! ss_sym, [])
+        (sym_map ! ss_sym, [])
         asteriusStatics
     combine segs =
       reverse $
@@ -399,7 +399,7 @@ resolveEntitySymbols sym_table = f
             _ -> go
       where
         go = gmapT f t
-        subst = (sym_table HM.!)
+        subst = (sym_table !)
 
 resolveAsteriusModule ::
      Bool

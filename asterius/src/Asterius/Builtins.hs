@@ -154,6 +154,8 @@ rtsAsteriusFunctionTypeMap =
     | (rt, pts) <-
         [ (F32, [F32])
         , (F64, [F64])
+        , (F32, [F32, F32])
+        , (F64, [F64, F64])
         , (None, [I32, I32])
         , (None, [F32])
         , (None, [F64])

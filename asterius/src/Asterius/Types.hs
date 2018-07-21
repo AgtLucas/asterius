@@ -1,5 +1,6 @@
 {-# LANGUAGE DeriveDataTypeable #-}
 {-# LANGUAGE DeriveGeneric #-}
+{-# LANGUAGE DerivingStrategies #-}
 {-# LANGUAGE DuplicateRecordFields #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 {-# LANGUAGE OverloadedLists #-}
@@ -126,7 +127,9 @@ instance Hashable AsteriusModuleSymbol
 
 newtype AsteriusEntitySymbol = AsteriusEntitySymbol
   { entityName :: SBS.ShortByteString
-  } deriving (Eq, Ord, Show, IsString, Serialize, Hashable)
+  } deriving (Eq, Ord, IsString, Serialize, Hashable)
+
+deriving newtype instance Show AsteriusEntitySymbol
 
 deriving instance Generic AsteriusEntitySymbol
 

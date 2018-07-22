@@ -5,16 +5,36 @@
 
 module Asterius.MemoryTrap
   ( addMemoryTrap
+  , addMemoryTrapDeep
   ) where
 
 import Asterius.Builtins
 import Asterius.Types
 import Data.Data (Data, gmapT)
+import qualified Data.HashMap.Strict as HM
 import qualified Data.Vector as V
 import Type.Reflection
 
-addMemoryTrap :: Data a => a -> a
-addMemoryTrap t =
+addMemoryTrap :: AsteriusModule -> AsteriusModule
+addMemoryTrap m =
+  m
+    { functionMap =
+        HM.mapWithKey
+          (\func_sym func ->
+             if func_sym `V.elem`
+                [ "_get_Sp"
+                , "_get_SpLim"
+                , "_get_Hp"
+                , "_get_HpLim"
+                , "__asterius_memory_trap"
+                ]
+               then func
+               else addMemoryTrapDeep func)
+          (functionMap m)
+    }
+
+addMemoryTrapDeep :: Data a => a -> a
+addMemoryTrapDeep t =
   case eqTypeRep (typeOf t) (typeRep :: TypeRep Expression) of
     Just HRefl ->
       case t of
@@ -28,7 +48,7 @@ addMemoryTrap t =
                       V.fromList $
                       [ UnresolvedSetLocal
                           { unresolvedLocalReg = LoadStoreI64Ptr
-                          , value = addMemoryTrap i64_ptr
+                          , value = addMemoryTrapDeep i64_ptr
                           }
                       , UnresolvedSetLocal
                           { unresolvedLocalReg = LoadStoreValue valueType
@@ -65,11 +85,11 @@ addMemoryTrap t =
                       V.fromList $
                       [ UnresolvedSetLocal
                           { unresolvedLocalReg = LoadStoreI64Ptr
-                          , value = addMemoryTrap i64_ptr
+                          , value = addMemoryTrapDeep i64_ptr
                           }
                       , UnresolvedSetLocal
                           { unresolvedLocalReg = LoadStoreValue valueType
-                          , value = addMemoryTrap value
+                          , value = addMemoryTrapDeep value
                           }
                       , t
                           { ptr = Unary {unaryOp = WrapInt64, operand0 = p}
@@ -97,4 +117,4 @@ addMemoryTrap t =
   where
     p = UnresolvedGetLocal {unresolvedLocalReg = LoadStoreI64Ptr}
     v vt = UnresolvedGetLocal {unresolvedLocalReg = LoadStoreValue vt}
-    go = gmapT addMemoryTrap t
+    go = gmapT addMemoryTrapDeep t

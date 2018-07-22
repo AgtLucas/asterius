@@ -29,6 +29,7 @@ import Control.Monad.Reader
 import qualified Data.ByteString.Char8 as CBS
 import qualified Data.ByteString.Short as SBS
 import qualified Data.HashMap.Strict as HM
+import Data.List
 import Data.String
 import Data.Traversable
 import qualified Data.Vector as V
@@ -1038,6 +1039,32 @@ marshalCmmProc GHC.CmmGraph {g_graph = GHC.GMany _ body _, ..} = do
       k <- marshalLabel lbl
       b <- marshalCmmBlock (GHC.blockToList inner_nodes) exit_node
       pure (k, b)
+  let blocks_unresolved =
+        ( "__asterius_unreachable"
+        , RelooperBlock
+            { addBlock =
+                AddBlock {code = marshalErrorCode errUnreachableBlock None}
+            , addBranches = []
+            }) :
+        rbs
+      blocks_key_map =
+        HM.fromList
+          (zip (sort (map fst blocks_unresolved)) (map showSBS [(0 :: Int) ..]))
+      blocks_key_subst = (blocks_key_map !)
+      blocks_resolved =
+        [ ( blocks_key_subst k
+          , b
+              { addBranches =
+                  V.map
+                    (\br ->
+                       case br of
+                         AddBranch {..} -> br {to = blocks_key_subst to}
+                         AddBranchForSwitch {..} ->
+                           br {to = blocks_key_subst to})
+                    (addBranches b)
+              })
+        | (k, b) <- blocks_unresolved
+        ]
   pure
     AsteriusFunction
       { functionType = FunctionType {returnType = I64, paramTypes = []}
@@ -1047,22 +1074,8 @@ marshalCmmProc GHC.CmmGraph {g_graph = GHC.GMany _ body _, ..} = do
             , bodys =
                 [ CFG
                     RelooperRun
-                      { entry = entry_k
-                      , blockMap =
-                          fromList $
-                          [ ( "__asterius_unreachable"
-                            , RelooperBlock
-                                { addBlock =
-                                    AddBlock
-                                      { code =
-                                          marshalErrorCode
-                                            errUnreachableBlock
-                                            None
-                                      }
-                                , addBranches = []
-                                })
-                          ] <>
-                          rbs
+                      { entry = blocks_key_subst entry_k
+                      , blockMap = HM.fromList blocks_resolved
                       , labelHelper = 0
                       }
                 , GetLocal {index = 2, valueType = I64}

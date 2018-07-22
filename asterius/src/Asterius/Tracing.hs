@@ -10,9 +10,10 @@ module Asterius.Tracing
 import Asterius.Builtins
 import Asterius.Internals
 import Asterius.Types
+import qualified Data.ByteString.Short as SBS
+import Data.Char
 import Data.Data (Data, gmapT)
 import qualified Data.HashMap.Strict as HM
-import Data.List
 import qualified Data.Vector as V
 import Foreign
 import Type.Reflection
@@ -119,10 +120,9 @@ addTracingModule func_sym_map func_sym func_type func
                                 ]
                           }
                     }
-                  where lbls = sort $ HM.keys blockMap
-                        lbl_to_idx lbl = ConstI32 $ fromIntegral idx
-                          where
-                            Just idx = elemIndex lbl lbls
+                  where lbl_to_idx =
+                          ConstI32 .
+                          read . map (chr . fromIntegral) . SBS.unpack
                 SetLocal {..}
                   | ((index_int < param_num) && (params V.! index_int == I64)) ||
                       ((index_int >= param_num) &&

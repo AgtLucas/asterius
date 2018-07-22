@@ -197,7 +197,7 @@ main = do
        when outputIR $ do
          let p = input -<.> "txt"
          putStrLn $ "Writing linked IR to " <> show p
-         writeFile p $ ppShow final_m
+         writeFile p $ show final_m
        putStrLn "Invoking binaryen to marshal the WebAssembly module"
        m_ref <- withPool $ \pool -> marshalModule pool final_m
        putStrLn "Validating the WebAssembly module"

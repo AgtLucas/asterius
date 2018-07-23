@@ -90,7 +90,7 @@ opts =
 genNode :: FFIMarshalState -> LinkReport -> FilePath -> Builder
 genNode ffi_state LinkReport {..} m_path =
   mconcat
-    [ "\"use strict\";\nconst fs = require(\"fs\");\nlet i = null;\nlet func_syms = "
+    [ "\"use strict\";\nprocess.on('unhandledRejection', err => { throw err; });\nconst fs = require(\"fs\");\nlet i = null;\nlet func_syms = "
     , string7 $ show $ map fst $ sortOn snd $ HM.toList functionSymbolMap
     , ";\nfunction newI64(lo,hi) { return BigInt(lo) | (BigInt(hi) << 32n);  };\nlet __asterius_jsffi_JSRefs = [];\nfunction __asterius_jsffi_newJSRef(e) { const n = __asterius_jsffi_JSRefs.length; __asterius_jsffi_JSRefs[n] = e; return n; };\nWebAssembly.instantiate(fs.readFileSync("
     , string7 $ show m_path

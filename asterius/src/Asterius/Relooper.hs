@@ -11,8 +11,6 @@ module Asterius.Relooper
 
 import Asterius.Internals
 import Asterius.Types
-import qualified Data.ByteString.Short as SBS
-import Data.Char
 import Data.Data (Data, gmapT)
 import qualified Data.HashMap.Strict as HM
 import Data.List
@@ -25,9 +23,7 @@ relooper RelooperRun {..} = result_expr
   where
     lbls = HM.keys blockMap
     def_lbl = fromString $ show $ length lbls - 1
-    lbl_map =
-      HM.fromList
-        [(lbl, read $ map (chr . fromIntegral) $ SBS.unpack lbl) | lbl <- lbls]
+    lbl_map = HM.fromList $ zip lbls [0 ..]
     lbl_to_idx = (lbl_map !)
     set_block_lbl lbl = SetLocal {index = 0, value = ConstI32 $ lbl_to_idx lbl}
     initial_expr =

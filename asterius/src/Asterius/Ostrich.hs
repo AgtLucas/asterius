@@ -73,8 +73,4 @@ ostrich t =
       , "print_i64"
       , "print_f32"
       , "print_f64"
-      , "_get_Sp"
-      , "_get_SpLim"
-      , "_get_Hp"
-      , "_get_HpLim"
       ]

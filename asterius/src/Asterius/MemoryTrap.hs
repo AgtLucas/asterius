@@ -8,11 +8,11 @@ module Asterius.MemoryTrap
   , addMemoryTrapDeep
   ) where
 
-import Asterius.Builtins
 import Asterius.Types
+import qualified Data.ByteString as BS
+import qualified Data.ByteString.Short as SBS
 import Data.Data (Data, gmapT)
 import qualified Data.HashMap.Strict as HM
-import qualified Data.Vector as V
 import Type.Reflection
 
 addMemoryTrap :: AsteriusModule -> AsteriusModule
@@ -21,13 +21,7 @@ addMemoryTrap m =
     { functionMap =
         HM.mapWithKey
           (\func_sym func ->
-             if func_sym `V.elem`
-                [ "_get_Sp"
-                , "_get_SpLim"
-                , "_get_Hp"
-                , "_get_HpLim"
-                , "__asterius_memory_trap"
-                ]
+             if "__asterius" `BS.isPrefixOf` SBS.fromShort (entityName func_sym)
                then func
                else addMemoryTrapDeep func)
           (functionMap m)
@@ -39,72 +33,34 @@ addMemoryTrapDeep t =
     Just HRefl ->
       case t of
         Load {ptr = Unary {unaryOp = WrapInt64, operand0 = i64_ptr}, ..} ->
-          Block
-            { name = ""
-            , bodys =
-                V.fromList $
-                [ UnresolvedSetLocal
-                    { unresolvedLocalReg = LoadStoreI64Ptr
-                    , value = addMemoryTrapDeep i64_ptr
-                    }
-                , UnresolvedSetLocal
-                    { unresolvedLocalReg = LoadStoreValue valueType
-                    , value =
-                        t {ptr = Unary {unaryOp = WrapInt64, operand0 = p}}
-                    }
-                ] <>
-                [ CallImport
-                  { target' = "__asterius_load_i64"
-                  , operands = cutI64 p <> cutI64 (v valueType)
-                  , valueType = None
-                  }
-                | valueType == I64
-                ] <>
-                [ Call
-                    { target = "__asterius_memory_trap"
-                    , operands = [p]
-                    , valueType = None
-                    }
-                , v valueType
-                ]
+          Call
+            { target =
+                case (valueType, bytes) of
+                  (I32, 1) -> "__asterius_Load_I8"
+                  (I32, 2) -> "__asterius_Load_I16"
+                  (I32, 4) -> "__asterius_Load_I32"
+                  (I64, 8) -> "__asterius_Load_I64"
+                  (F32, 4) -> "__asterius_Load_F32"
+                  (F64, 8) -> "__asterius_Load_F64"
+                  _ -> error $ "Unsupported instruction: " <> show t
+            , operands = [addMemoryTrapDeep i64_ptr]
             , valueType = valueType
             }
         Store {ptr = Unary {unaryOp = WrapInt64, operand0 = i64_ptr}, ..} ->
-          Block
-            { name = ""
-            , bodys =
-                V.fromList $
-                [ UnresolvedSetLocal
-                    { unresolvedLocalReg = LoadStoreI64Ptr
-                    , value = addMemoryTrapDeep i64_ptr
-                    }
-                , UnresolvedSetLocal
-                    { unresolvedLocalReg = LoadStoreValue valueType
-                    , value = addMemoryTrapDeep value
-                    }
-                , t
-                    { ptr = Unary {unaryOp = WrapInt64, operand0 = p}
-                    , value = v valueType
-                    }
-                ] <>
-                [ CallImport
-                  { target' = "__asterius_store_i64"
-                  , operands = cutI64 p <> cutI64 (v valueType)
-                  , valueType = None
-                  }
-                | valueType == I64
-                ] <>
-                [ Call
-                    { target = "__asterius_memory_trap"
-                    , operands = [p]
-                    , valueType = None
-                    }
-                ]
+          Call
+            { target =
+                case (valueType, bytes) of
+                  (I32, 1) -> "__asterius_Store_I8"
+                  (I32, 2) -> "__asterius_Store_I16"
+                  (I32, 4) -> "__asterius_Store_I32"
+                  (I64, 8) -> "__asterius_Store_I64"
+                  (F32, 4) -> "__asterius_Store_F32"
+                  (F64, 8) -> "__asterius_Store_F64"
+                  _ -> error $ "Unsupported instruction: " <> show t
+            , operands = [addMemoryTrapDeep i64_ptr, addMemoryTrapDeep value]
             , valueType = None
             }
         _ -> go
     _ -> go
   where
-    p = UnresolvedGetLocal {unresolvedLocalReg = LoadStoreI64Ptr}
-    v vt = UnresolvedGetLocal {unresolvedLocalReg = LoadStoreValue vt}
     go = gmapT addMemoryTrapDeep t

@@ -57,8 +57,6 @@ unresolvedLocalRegType lr =
     QuotRemI32Y -> I32
     QuotRemI64X -> I64
     QuotRemI64Y -> I64
-    LoadStoreI64Ptr -> I64
-    LoadStoreValue vt -> vt
 
 collectUnresolvedLocalRegs :: Data a => a -> HS.HashSet UnresolvedLocalReg
 collectUnresolvedLocalRegs = collect proxy#

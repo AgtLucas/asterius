@@ -131,11 +131,23 @@ rtsAsteriusModule opts =
         , ("print_i64", printI64Function opts)
         , ("print_f32", printF32Function opts)
         , ("print_f64", printF64Function opts)
-        , ("_get_Sp", getI32GlobalRegFunction opts Sp)
-        , ("_get_SpLim", getI32GlobalRegFunction opts SpLim)
-        , ("_get_Hp", getI32GlobalRegFunction opts Hp)
-        , ("_get_HpLim", getI32GlobalRegFunction opts HpLim)
+        , ("__asterius_Load_Sp", getI32GlobalRegFunction opts Sp)
+        , ("__asterius_Load_SpLim", getI32GlobalRegFunction opts SpLim)
+        , ("__asterius_Load_Hp", getI32GlobalRegFunction opts Hp)
+        , ("__asterius_Load_HpLim", getI32GlobalRegFunction opts HpLim)
         , ("__asterius_memory_trap", memoryTrapFunction opts)
+        , ("__asterius_Load_I8", loadWrapperFunction opts 1 I32)
+        , ("__asterius_Load_I16", loadWrapperFunction opts 2 I32)
+        , ("__asterius_Load_I32", loadWrapperFunction opts 4 I32)
+        , ("__asterius_Load_I64", loadWrapperFunction opts 8 I64)
+        , ("__asterius_Load_F32", loadWrapperFunction opts 4 F32)
+        , ("__asterius_Load_F64", loadWrapperFunction opts 8 F64)
+        , ("__asterius_Store_I8", storeWrapperFunction opts 1 I32)
+        , ("__asterius_Store_I16", storeWrapperFunction opts 2 I32)
+        , ("__asterius_Store_I32", storeWrapperFunction opts 4 I32)
+        , ("__asterius_Store_I64", storeWrapperFunction opts 8 I64)
+        , ("__asterius_Store_F32", storeWrapperFunction opts 4 F32)
+        , ("__asterius_Store_F64", storeWrapperFunction opts 8 F64)
         ]
     }
 
@@ -246,7 +258,13 @@ rtsAsteriusFunctionExports :: V.Vector FunctionExport
 rtsAsteriusFunctionExports =
   V.fromList
     [ FunctionExport {internalName = f, externalName = f}
-    | f <- ["main", "_get_Sp", "_get_SpLim", "_get_Hp", "_get_HpLim"]
+    | f <-
+        [ "main"
+        , "__asterius_Load_Sp"
+        , "__asterius_Load_SpLim"
+        , "__asterius_Load_Hp"
+        , "__asterius_Load_HpLim"
+        ]
     ]
 
 {-# INLINEABLE marshalErrorCode #-}
@@ -1068,6 +1086,62 @@ memoryTrapFunction _ =
             , operand0 = struct_addr_expr
             , operand1 = constInt o
             }
+
+loadWrapperFunction, storeWrapperFunction ::
+     BuiltinsOptions -> BinaryenIndex -> ValueType -> AsteriusFunction
+loadWrapperFunction _ b vt =
+  AsteriusFunction
+    { functionType = FunctionType {returnType = vt, paramTypes = [I64]}
+    , body =
+        Block
+          { name = ""
+          , bodys =
+              [ Call
+                  { target = "__asterius_memory_trap"
+                  , operands = [p]
+                  , valueType = None
+                  }
+              , Load
+                  { signed = False
+                  , bytes = b
+                  , offset = 0
+                  , align = 0
+                  , valueType = vt
+                  , ptr = wrapI64 p
+                  }
+              ]
+          , valueType = vt
+          }
+    }
+  where
+    p = getLocalWord 0
+
+storeWrapperFunction _ b vt =
+  AsteriusFunction
+    { functionType = FunctionType {returnType = None, paramTypes = [I64, vt]}
+    , body =
+        Block
+          { name = ""
+          , bodys =
+              [ Call
+                  { target = "__asterius_memory_trap"
+                  , operands = [p]
+                  , valueType = None
+                  }
+              , Store
+                  { bytes = b
+                  , offset = 0
+                  , align = 0
+                  , ptr = wrapI64 p
+                  , value = GetLocal {index = 1, valueType = vt}
+                  , valueType = vt
+                  }
+              ]
+          , valueType = None
+          }
+    }
+  where
+    p = getLocalWord 0
 
 fieldOff :: Expression -> Int -> Expression
 fieldOff p o

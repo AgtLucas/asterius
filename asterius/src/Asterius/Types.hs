@@ -167,8 +167,6 @@ data UnresolvedLocalReg
   | QuotRemI32Y
   | QuotRemI64X
   | QuotRemI64Y
-  | LoadStoreI64Ptr
-  | LoadStoreValue ValueType
   deriving (Eq, Ord, Show, Generic, Data)
 
 instance Serialize UnresolvedLocalReg

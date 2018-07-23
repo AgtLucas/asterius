@@ -26,10 +26,10 @@ addTracingModule ::
   -> Function
 addTracingModule func_sym_map func_sym func_type func
   | func_sym `V.elem`
-      [ "_get_Sp"
-      , "_get_SpLim"
-      , "_get_Hp"
-      , "_get_HpLim"
+      [ "__asterius_Load_Sp"
+      , "__asterius_Load_SpLim"
+      , "__asterius_Load_Hp"
+      , "__asterius_Load_HpLim"
       , "__asterius_memory_trap"
       ] = func
   | otherwise = f func

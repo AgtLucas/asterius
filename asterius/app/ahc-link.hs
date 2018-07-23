@@ -92,11 +92,11 @@ genNode ffi_state LinkReport {..} m_path =
   mconcat
     [ "\"use strict\";\nprocess.on('unhandledRejection', err => { throw err; });\nconst fs = require(\"fs\");\nlet i = null;\nlet func_syms = "
     , string7 $ show $ map fst $ sortOn snd $ HM.toList functionSymbolMap
-    , ";\nfunction newI64(lo,hi) { return BigInt(lo) | (BigInt(hi) << 32n);  };\nlet __asterius_jsffi_JSRefs = [];\nfunction __asterius_jsffi_newJSRef(e) { const n = __asterius_jsffi_JSRefs.length; __asterius_jsffi_JSRefs[n] = e; return n; };\nWebAssembly.instantiate(fs.readFileSync("
+    , ";\nfunction newI64(lo, hi) { return BigInt(lo) | (BigInt(hi) << 32n);  };\nlet __asterius_jsffi_JSRefs = [];\nfunction __asterius_jsffi_newJSRef(e) { const n = __asterius_jsffi_JSRefs.length; __asterius_jsffi_JSRefs[n] = e; return n; };\nWebAssembly.instantiate(fs.readFileSync("
     , string7 $ show m_path
-    , "), {Math:Math, jsffi: "
+    , "), {Math: Math, jsffi: "
     , generateFFIDict ffi_state
-    , ", rts: {printI64: (lo,hi) => console.log(newI64(lo,hi)), print: console.log, panic: (e => console.error(\"[ERROR] \" + [\"errGCEnter1\", \"errGCFun\", \"errBarf\", \"errStgGC\", \"errUnreachableBlock\", \"errHeapOverflow\", \"errMegaBlockGroup\", \"errUnimplemented\", \"errAtomics\", \"errSetBaseReg\", \"errBrokenFunction\"][e-1])), __asterius_memory_trap_trigger: ((p_lo,p_hi) => console.error(\"[ERROR] Uninitialized memory trapped at 0x\" + newI64(p_lo,p_hi).toString(16).padStart(8, \"0\"))), __asterius_load_i64: ((p_lo,p_hi,v_lo,v_hi) => console.log(\"[INFO] Loading i64 at 0x\" + newI64(p_lo,p_hi).toString(16).padStart(8, \"0\") + \", value: 0x\" + newI64(v_lo,v_hi).toString(16).padStart(8, \"0\"))), __asterius_store_i64: ((p_lo,p_hi,v_lo,v_hi) => console.log(\"[INFO] Storing i64 at 0x\" + newI64(p_lo,p_hi).toString(16).padStart(8, \"0\") + \", value: 0x\" + newI64(v_lo,v_hi).toString(16).padStart(8, \"0\"))), traceCmm: (f => console.log(\"[INFO] Entering \" + func_syms[f-1] + \", Sp: 0x\" + i.exports._get_Sp().toString(16).padStart(8, \"0\") + \", SpLim: 0x\" + i.exports._get_SpLim().toString(16).padStart(8, \"0\") + \", Hp: 0x\" + i.exports._get_Hp().toString(16).padStart(8, \"0\") + \", HpLim: 0x\" + i.exports._get_HpLim().toString(16).padStart(8, \"0\"))), traceCmmBlock: ((f,lbl) => console.log(\"[INFO] Branching to \" + func_syms[f-1] + \" basic block \" + lbl + \", Sp: 0x\" + i.exports._get_Sp().toString(16).padStart(8, \"0\") + \", SpLim: 0x\" + i.exports._get_SpLim().toString(16).padStart(8, \"0\") + \", Hp: 0x\" + i.exports._get_Hp().toString(16).padStart(8, \"0\") + \", HpLim: 0x\" + i.exports._get_HpLim().toString(16).padStart(8, \"0\"))), traceCmmSetLocal: ((f,i,lo,hi) => console.log(\"[INFO] In \" + func_syms[f-1] + \", Setting local register \" + i + \" to 0x\" + newI64(lo,hi).toString(16).padStart(8, \"0\")))}}).then(r => {i = r.instance; i.exports.main();});\n"
+    , ", rts: {printI64: (lo, hi) => console.log(newI64(lo, hi)), print: console.log, panic: (e => console.error(\"[ERROR] \" + [\"errGCEnter1\", \"errGCFun\", \"errBarf\", \"errStgGC\", \"errUnreachableBlock\", \"errHeapOverflow\", \"errMegaBlockGroup\", \"errUnimplemented\", \"errAtomics\", \"errSetBaseReg\", \"errBrokenFunction\"][e-1])), __asterius_memory_trap_trigger: ((p_lo, p_hi) => console.error(\"[ERROR] Uninitialized memory trapped at 0x\" + newI64(p_lo, p_hi).toString(16).padStart(8, \"0\"))), __asterius_load_i64: ((p_lo, p_hi, v_lo, v_hi) => console.log(\"[INFO] Loading i64 at 0x\" + newI64(p_lo, p_hi).toString(16).padStart(8, \"0\") + \", value: 0x\" + newI64(v_lo,v_hi).toString(16).padStart(8, \"0\"))), __asterius_store_i64: ((p_lo, p_hi, v_lo, v_hi) => console.log(\"[INFO] Storing i64 at 0x\" + newI64(p_lo, p_hi).toString(16).padStart(8, \"0\") + \", value: 0x\" + newI64(v_lo,v_hi).toString(16).padStart(8, \"0\"))), traceCmm: (f => console.log(\"[INFO] Entering \" + func_syms[f-1] + \", Sp: 0x\" + i.exports.__asterius_Load_Sp().toString(16).padStart(8, \"0\") + \", SpLim: 0x\" + i.exports.__asterius_Load_SpLim().toString(16).padStart(8, \"0\") + \", Hp: 0x\" + i.exports.__asterius_Load_Hp().toString(16).padStart(8, \"0\") + \", HpLim: 0x\" + i.exports.__asterius_Load_HpLim().toString(16).padStart(8, \"0\"))), traceCmmBlock: ((f,lbl) => console.log(\"[INFO] Branching to \" + func_syms[f-1] + \" basic block \" + lbl + \", Sp: 0x\" + i.exports.__asterius_Load_Sp().toString(16).padStart(8, \"0\") + \", SpLim: 0x\" + i.exports.__asterius_Load_SpLim().toString(16).padStart(8, \"0\") + \", Hp: 0x\" + i.exports.__asterius_Load_Hp().toString(16).padStart(8, \"0\") + \", HpLim: 0x\" + i.exports.__asterius_Load_HpLim().toString(16).padStart(8, \"0\"))), traceCmmSetLocal: ((f,i,lo, hi) => console.log(\"[INFO] In \" + func_syms[f-1] + \", Setting local register \" + i + \" to 0x\" + newI64(lo, hi).toString(16).padStart(8, \"0\")))}}).then(r => {i = r.instance; i.exports.main();});\n"
     ]
 
 main :: IO ()
@@ -167,18 +167,28 @@ main = do
   final_store <- readIORef final_store_ref
   putStrLn "Attempting to link into a standalone WebAssembly module"
   let (!m_final_m, !report) =
-        linkStart
-          force
-          debug
-          ffi_state
-          final_store
-          [ "main"
-          , "_get_Sp"
-          , "_get_SpLim"
-          , "_get_Hp"
-          , "_get_HpLim"
-          , "__asterius_memory_trap"
-          ]
+        linkStart force debug ffi_state final_store $
+        ["main"] <>
+        if debug
+          then [ "__asterius_Load_Sp"
+               , "__asterius_Load_SpLim"
+               , "__asterius_Load_Hp"
+               , "__asterius_Load_HpLim"
+               , "__asterius_memory_trap"
+               , "__asterius_Load_I8"
+               , "__asterius_Load_I16"
+               , "__asterius_Load_I32"
+               , "__asterius_Load_I64"
+               , "__asterius_Load_F32"
+               , "__asterius_Load_F64"
+               , "__asterius_Store_I8"
+               , "__asterius_Store_I16"
+               , "__asterius_Store_I32"
+               , "__asterius_Store_I64"
+               , "__asterius_Store_F32"
+               , "__asterius_Store_F64"
+               ]
+          else []
   maybe
     (pure ())
     (\p -> do

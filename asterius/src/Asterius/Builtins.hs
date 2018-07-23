@@ -252,7 +252,26 @@ rtsAsteriusFunctionImports =
       , functionType =
           FunctionType {returnType = None, paramTypes = [I32, I32, I32, I32]}
       }
-  ]
+  ] <>
+  concat
+    [ [ AsteriusFunctionImport
+          { internalName = "__asterius_load_" <> k
+          , externalModuleName = "rts"
+          , externalBaseName = "__asterius_load_" <> k
+          , functionType =
+              FunctionType {returnType = None, paramTypes = [I32, I32, t]}
+          }
+      , AsteriusFunctionImport
+          { internalName = "__asterius_store_" <> k
+          , externalModuleName = "rts"
+          , externalBaseName = "__asterius_store_" <> k
+          , functionType =
+              FunctionType {returnType = None, paramTypes = [I32, I32, t]}
+          }
+    ]
+    | (k, t) <-
+        [("i8", I32), ("i16", I32), ("i32", I32), ("f32", F32), ("f64", F64)]
+    ]
 
 rtsAsteriusFunctionExports :: V.Vector FunctionExport
 rtsAsteriusFunctionExports =
@@ -1096,25 +1115,46 @@ loadWrapperFunction _ b vt =
         Block
           { name = ""
           , bodys =
-              [ Call
+              [ CallImport
+                  { target' =
+                      case (vt, b) of
+                        (I32, 1) -> "__asterius_load_i8"
+                        (I32, 2) -> "__asterius_load_i16"
+                        (I32, 4) -> "__asterius_load_i32"
+                        (I64, 8) -> "__asterius_load_i64"
+                        (F32, 4) -> "__asterius_load_f32"
+                        (F64, 8) -> "__asterius_load_f64"
+                        _ ->
+                          error $
+                          "Unsupported ValueType/ByteLength: " <> show (vt, b)
+                  , operands =
+                      cutI64 p <>
+                      (case vt of
+                         I64 -> cutI64 v
+                         _ -> [v])
+                  , valueType = None
+                  }
+              , Call
                   { target = "__asterius_memory_trap"
                   , operands = [p]
                   , valueType = None
                   }
-              , Load
-                  { signed = False
-                  , bytes = b
-                  , offset = 0
-                  , align = 0
-                  , valueType = vt
-                  , ptr = wrapI64 p
-                  }
+              , v
               ]
           , valueType = vt
           }
     }
   where
     p = getLocalWord 0
+    v =
+      Load
+        { signed = False
+        , bytes = b
+        , offset = 0
+        , align = 0
+        , valueType = vt
+        , ptr = wrapI64 p
+        }
 
 storeWrapperFunction _ b vt =
   AsteriusFunction
@@ -1123,7 +1163,26 @@ storeWrapperFunction _ b vt =
         Block
           { name = ""
           , bodys =
-              [ Call
+              [ CallImport
+                  { target' =
+                      case (vt, b) of
+                        (I32, 1) -> "__asterius_store_i8"
+                        (I32, 2) -> "__asterius_store_i16"
+                        (I32, 4) -> "__asterius_store_i32"
+                        (I64, 8) -> "__asterius_store_i64"
+                        (F32, 4) -> "__asterius_store_f32"
+                        (F64, 8) -> "__asterius_store_f64"
+                        _ ->
+                          error $
+                          "Unsupported ValueType/ByteLength: " <> show (vt, b)
+                  , operands =
+                      cutI64 p <>
+                      (case vt of
+                         I64 -> cutI64 v
+                         _ -> [v])
+                  , valueType = None
+                  }
+              , Call
                   { target = "__asterius_memory_trap"
                   , operands = [p]
                   , valueType = None
@@ -1133,7 +1192,7 @@ storeWrapperFunction _ b vt =
                   , offset = 0
                   , align = 0
                   , ptr = wrapI64 p
-                  , value = GetLocal {index = 1, valueType = vt}
+                  , value = v
                   , valueType = vt
                   }
               ]
@@ -1142,6 +1201,7 @@ storeWrapperFunction _ b vt =
     }
   where
     p = getLocalWord 0
+    v = GetLocal {index = 1, valueType = vt}
 
 fieldOff :: Expression -> Int -> Expression
 fieldOff p o

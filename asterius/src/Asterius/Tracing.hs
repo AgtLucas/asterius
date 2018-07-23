@@ -10,6 +10,7 @@ module Asterius.Tracing
 import Asterius.Builtins
 import Asterius.Internals
 import Asterius.Types
+import qualified Data.ByteString as BS
 import qualified Data.ByteString.Short as SBS
 import Data.Char
 import Data.Data (Data, gmapT)
@@ -25,13 +26,7 @@ addTracingModule ::
   -> Function
   -> Function
 addTracingModule func_sym_map func_sym func_type func
-  | func_sym `V.elem`
-      [ "__asterius_Load_Sp"
-      , "__asterius_Load_SpLim"
-      , "__asterius_Load_Hp"
-      , "__asterius_Load_HpLim"
-      , "__asterius_memory_trap"
-      ] = func
+  | "__asterius" `BS.isPrefixOf` SBS.fromShort (entityName func_sym) = func
   | otherwise = f func
   where
     f :: Data a => a -> a

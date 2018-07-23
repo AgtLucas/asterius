@@ -455,7 +455,6 @@ data Expression
   | UnresolvedGetGlobal { unresolvedGlobalReg :: UnresolvedGlobalReg }
   | UnresolvedSetGlobal { unresolvedGlobalReg :: UnresolvedGlobalReg
                         , value :: Expression }
-  | MemoryTrapped { trappedExpression :: Expression }
   | Null
   deriving (Show, Generic, Data)
 

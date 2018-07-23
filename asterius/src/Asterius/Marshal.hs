@@ -340,7 +340,6 @@ marshalExpression pool m e =
       n <- marshalExpression pool m replacement
       c_BinaryenAtomicCmpxchg m bytes offset p o n (marshalValueType valueType)
     CFG {..} -> relooperRun pool m graph
-    MemoryTrapped {..} -> marshalExpression pool m trappedExpression
     Null -> pure nullPtr
     _ -> throwIO $ UnsupportedExpression e
 

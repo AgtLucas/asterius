@@ -38,79 +38,69 @@ addMemoryTrapDeep t =
   case eqTypeRep (typeOf t) (typeRep :: TypeRep Expression) of
     Just HRefl ->
       case t of
-        MemoryTrapped {} -> t
         Load {ptr = Unary {unaryOp = WrapInt64, operand0 = i64_ptr}, ..} ->
-          MemoryTrapped
-            { trappedExpression =
-                Block
-                  { name = ""
-                  , bodys =
-                      V.fromList $
-                      [ UnresolvedSetLocal
-                          { unresolvedLocalReg = LoadStoreI64Ptr
-                          , value = addMemoryTrapDeep i64_ptr
-                          }
-                      , UnresolvedSetLocal
-                          { unresolvedLocalReg = LoadStoreValue valueType
-                          , value =
-                              t
-                                { ptr =
-                                    Unary {unaryOp = WrapInt64, operand0 = p}
-                                }
-                          }
-                      ] <>
-                      [ CallImport
-                        { target' = "__asterius_load_i64"
-                        , operands = cutI64 p <> cutI64 (v valueType)
-                        , valueType = None
-                        }
-                      | valueType == I64
-                      ] <>
-                      [ Call
-                          { target = "__asterius_memory_trap"
-                          , operands = [p]
-                          , valueType = None
-                          }
-                      , v valueType
-                      ]
-                  , valueType = valueType
-                  }
-            }
-        Store {ptr = Unary {unaryOp = WrapInt64, operand0 = i64_ptr}, ..} ->
-          MemoryTrapped
-            { trappedExpression =
-                Block
-                  { name = ""
-                  , bodys =
-                      V.fromList $
-                      [ UnresolvedSetLocal
-                          { unresolvedLocalReg = LoadStoreI64Ptr
-                          , value = addMemoryTrapDeep i64_ptr
-                          }
-                      , UnresolvedSetLocal
-                          { unresolvedLocalReg = LoadStoreValue valueType
-                          , value = addMemoryTrapDeep value
-                          }
-                      , t
-                          { ptr = Unary {unaryOp = WrapInt64, operand0 = p}
-                          , value = v valueType
-                          }
-                      ] <>
-                      [ CallImport
-                        { target' = "__asterius_store_i64"
-                        , operands = cutI64 p <> cutI64 (v valueType)
-                        , valueType = None
-                        }
-                      | valueType == I64
-                      ] <>
-                      [ Call
-                          { target = "__asterius_memory_trap"
-                          , operands = [p]
-                          , valueType = None
-                          }
-                      ]
+          Block
+            { name = ""
+            , bodys =
+                V.fromList $
+                [ UnresolvedSetLocal
+                    { unresolvedLocalReg = LoadStoreI64Ptr
+                    , value = addMemoryTrapDeep i64_ptr
+                    }
+                , UnresolvedSetLocal
+                    { unresolvedLocalReg = LoadStoreValue valueType
+                    , value =
+                        t {ptr = Unary {unaryOp = WrapInt64, operand0 = p}}
+                    }
+                ] <>
+                [ CallImport
+                  { target' = "__asterius_load_i64"
+                  , operands = cutI64 p <> cutI64 (v valueType)
                   , valueType = None
                   }
+                | valueType == I64
+                ] <>
+                [ Call
+                    { target = "__asterius_memory_trap"
+                    , operands = [p]
+                    , valueType = None
+                    }
+                , v valueType
+                ]
+            , valueType = valueType
+            }
+        Store {ptr = Unary {unaryOp = WrapInt64, operand0 = i64_ptr}, ..} ->
+          Block
+            { name = ""
+            , bodys =
+                V.fromList $
+                [ UnresolvedSetLocal
+                    { unresolvedLocalReg = LoadStoreI64Ptr
+                    , value = addMemoryTrapDeep i64_ptr
+                    }
+                , UnresolvedSetLocal
+                    { unresolvedLocalReg = LoadStoreValue valueType
+                    , value = addMemoryTrapDeep value
+                    }
+                , t
+                    { ptr = Unary {unaryOp = WrapInt64, operand0 = p}
+                    , value = v valueType
+                    }
+                ] <>
+                [ CallImport
+                  { target' = "__asterius_store_i64"
+                  , operands = cutI64 p <> cutI64 (v valueType)
+                  , valueType = None
+                  }
+                | valueType == I64
+                ] <>
+                [ Call
+                    { target = "__asterius_memory_trap"
+                    , operands = [p]
+                    , valueType = None
+                    }
+                ]
+            , valueType = None
             }
         _ -> go
     _ -> go

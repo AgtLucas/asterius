@@ -43,7 +43,7 @@ addTracingModule func_sym_map func_sym func_type func
                       { name = ""
                       , bodys =
                           [ CallImport
-                              { target' = "traceCmm"
+                              { target' = "__asterius_traceCmm"
                               , operands = [func_idx]
                               , valueType = None
                               }
@@ -74,7 +74,7 @@ addTracingModule func_sym_map func_sym func_type func
                                                       , bodys =
                                                           [ CallImport
                                                               { target' =
-                                                                  "traceCmmBlock"
+                                                                  "__asterius_traceCmmBlock"
                                                               , operands =
                                                                   [ func_idx
                                                                   , lbl_to_idx
@@ -95,7 +95,7 @@ addTracingModule func_sym_map func_sym func_type func
                                                       , bodys =
                                                           [ CallImport
                                                               { target' =
-                                                                  "traceCmmBlock"
+                                                                  "__asterius_traceCmmBlock"
                                                               , operands =
                                                                   [ func_idx
                                                                   , lbl_to_idx
@@ -127,7 +127,7 @@ addTracingModule func_sym_map func_sym func_type func
                       , bodys =
                           [ SetLocal {index = index, value = value}
                           , CallImport
-                              { target' = "traceCmmSetLocal"
+                              { target' = "__asterius_traceCmmSetLocal"
                               , operands =
                                   [func_idx, ConstI32 $ fromIntegral index] <>
                                   cutI64

@@ -208,27 +208,27 @@ rtsAsteriusFunctionImports =
       , functionType = FunctionType {returnType = None, paramTypes = [F64]}
       }
   , AsteriusFunctionImport
-      { internalName = "errorI32"
+      { internalName = "__asterius_errorI32"
       , externalModuleName = "rts"
       , externalBaseName = "panic"
       , functionType = FunctionType {returnType = None, paramTypes = [I32]}
       }
   , AsteriusFunctionImport
-      { internalName = "traceCmm"
+      { internalName = "__asterius_traceCmm"
       , externalModuleName = "rts"
-      , externalBaseName = "traceCmm"
+      , externalBaseName = "__asterius_traceCmm"
       , functionType = FunctionType {returnType = None, paramTypes = [I32]}
       }
   , AsteriusFunctionImport
-      { internalName = "traceCmmBlock"
+      { internalName = "__asterius_traceCmmBlock"
       , externalModuleName = "rts"
-      , externalBaseName = "traceCmmBlock"
+      , externalBaseName = "__asterius_traceCmmBlock"
       , functionType = FunctionType {returnType = None, paramTypes = [I32, I32]}
       }
   , AsteriusFunctionImport
-      { internalName = "traceCmmSetLocal"
+      { internalName = "__asterius_traceCmmSetLocal"
       , externalModuleName = "rts"
-      , externalBaseName = "traceCmmSetLocal"
+      , externalBaseName = "__asterius_traceCmmSetLocal"
       , functionType =
           FunctionType {returnType = None, paramTypes = [I32, I32, I32, I32]}
       }
@@ -293,7 +293,7 @@ marshalErrorCode err vt =
     { name = ""
     , bodys =
         [ CallImport
-            {target' = "errorI32", operands = [ConstI32 err], valueType = None}
+            {target' = "__asterius_errorI32", operands = [ConstI32 err], valueType = None}
         , Unreachable
         ]
     , valueType = vt

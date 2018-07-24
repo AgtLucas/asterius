@@ -220,10 +220,12 @@ instance Monoid LinkReport where
 
 mergeSymbols ::
      Bool
+  -> Bool
   -> AsteriusStore
   -> HS.HashSet AsteriusEntitySymbol
   -> (Maybe AsteriusModule, LinkReport)
-mergeSymbols force_link AsteriusStore {..} syms = (maybe_final_m, final_rep)
+mergeSymbols force_link debug AsteriusStore {..} syms =
+  (maybe_final_m, final_rep)
   where
     maybe_final_m
       | HS.null (unfoundSymbols final_rep) &&
@@ -249,20 +251,27 @@ mergeSymbols force_link AsteriusStore {..} syms = (maybe_final_m, final_rep)
             [ case HM.lookup i_staging_sym staticsMap of
               Just ss ->
                 Right
-                  (i_staging_sym, mempty {staticsMap = [(i_staging_sym, ss)]})
+                  ( i_staging_sym
+                  , mempty
+                      {staticsMap = [(i_staging_sym, resolveGlobalRegs ss)]})
               _ ->
                 case HM.lookup i_staging_sym functionMap of
                   Just func ->
                     Right
                       ( i_staging_sym
-                      , mempty
-                          { functionMap =
-                              [ ( i_staging_sym
-                                , if force_link
-                                    then ostrich func
-                                    else func)
-                              ]
-                          })
+                      , let m0 =
+                              mempty
+                                { functionMap =
+                                    [ ( i_staging_sym
+                                      , resolveGlobalRegs $
+                                        if force_link
+                                          then ostrich func
+                                          else func)
+                                    ]
+                                }
+                         in if debug
+                              then addMemoryTrap m0
+                              else m0)
                   _
                     | force_link && HM.member i_staging_sym functionErrorMap ->
                       Right
@@ -415,7 +424,7 @@ resolveAsteriusModule ::
   -> ( Module
      , HM.HashMap AsteriusEntitySymbol Int64
      , HM.HashMap AsteriusEntitySymbol Int64)
-resolveAsteriusModule add_tracing ffi_state m_unresolved =
+resolveAsteriusModule debug ffi_state m_globals_resolved =
   ( Module
       { functionTypeMap =
           HM.fromList
@@ -431,7 +440,7 @@ resolveAsteriusModule add_tracing ffi_state m_unresolved =
           HM.fromList
             [ ( entityName func_sym
               , relooperDeep $
-                if add_tracing
+                if debug
                   then addTracingModule func_sym_map func_sym functionType func
                   else func)
             | (func_sym, AsteriusFunction {..}) <-
@@ -450,7 +459,7 @@ resolveAsteriusModule add_tracing ffi_state m_unresolved =
           V.fromList [resolveFunctionImport imp | imp <- func_imports]
       , tableImports = []
       , globalImports = []
-      , functionExports = rtsAsteriusFunctionExports
+      , functionExports = rtsAsteriusFunctionExports debug
       , tableExports = []
       , globalExports = []
       , globalMap = []
@@ -461,18 +470,13 @@ resolveAsteriusModule add_tracing ffi_state m_unresolved =
   , ss_sym_map
   , func_sym_map)
   where
-    m_globals_resolved =
-      resolveGlobalRegs $
-      if add_tracing
-        then addMemoryTrap m_unresolved
-        else m_unresolved
     (func_table, func_sym_map) = makeFunctionTable m_globals_resolved
     (last_o, ss_sym_map) = makeStaticsOffsetTable m_globals_resolved
     resolve_syms :: Data a => a -> a
     resolve_syms = resolveEntitySymbols $ func_sym_map <> ss_sym_map
     m_globals_syms_resolved = resolve_syms m_globals_resolved
     func_imports =
-      rtsAsteriusFunctionImports <> generateFFIFunctionImports ffi_state
+      rtsAsteriusFunctionImports debug <> generateFFIFunctionImports ffi_state
 
 linkStart ::
      Bool
@@ -481,17 +485,17 @@ linkStart ::
   -> AsteriusStore
   -> HS.HashSet AsteriusEntitySymbol
   -> (Maybe Module, LinkReport)
-linkStart force_link add_tracing ffi_state store syms =
+linkStart force_link debug ffi_state store syms =
   ( maybe_result_m
   , report {staticsSymbolMap = ss_sym_map, functionSymbolMap = func_sym_map})
   where
     bundled_store = generateFFIWrapperStore ffi_state <> store
-    (maybe_merged_m, report) = mergeSymbols force_link bundled_store syms
+    (maybe_merged_m, report) = mergeSymbols force_link debug bundled_store syms
     (maybe_result_m, ss_sym_map, func_sym_map) =
       case maybe_merged_m of
         Just merged_m -> (Just result_m, ss_sym_map', func_sym_map')
           where (result_m, ss_sym_map', func_sym_map') =
-                  resolveAsteriusModule add_tracing ffi_state merged_m
+                  resolveAsteriusModule debug ffi_state merged_m
         _ -> (Nothing, mempty, mempty)
 
 renderDot :: LinkReport -> Builder
